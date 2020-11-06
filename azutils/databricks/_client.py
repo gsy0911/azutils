@@ -1,6 +1,12 @@
 import requests
 from typing import List, Optional, Union
-from ._databricks import Databricks, DatabricksEvents, DataBricksRunningTime
+from ._databricks import (
+    Databricks,
+    DatabricksEvents,
+    DataBricksRunningTime,
+    DatabricksSetting,
+    DatabricksSettingHistory
+)
 
 
 class DatabricksClient:
@@ -32,6 +38,8 @@ class DatabricksClient:
         response = self._clusters_events(cluster_id=cluster_id)
         result_list.extend(response['events'])
         for _ in range(page_limit):
+            if "next_page" not in response:
+                break
             next_page = response['next_page']
             print(next_page)
             end_time = next_page['end_time']
@@ -60,3 +68,12 @@ class DatabricksClient:
     def cluster_running_time(self, cluster_id: str, page_limit: int = 500):
         cluster_events = self.clusters_events(cluster_id=cluster_id, page_limit=page_limit)
         return DataBricksRunningTime.get_from_databricks_event(cluster_events)
+
+    def cluster_settings(self, cluster_id: str, page_limit: int = 500):
+        cluster_events = self.clusters_events(cluster_id=cluster_id, page_limit=page_limit)
+        return DatabricksSetting.get_from_databricks_event(cluster_events)
+
+    def cluster_history(self, cluster_id: str, page_limit: int = 500) -> DatabricksSettingHistory:
+        databricks_setting_history = DatabricksSettingHistory()
+        databricks_setting_history.extend(self.cluster_settings(cluster_id=cluster_id, page_limit=page_limit))
+        return databricks_setting_history
