@@ -4,15 +4,14 @@ from typing import List
 
 class Databricks:
     def __init__(self, payload):
-        data = payload.copy()
-        self.cluster_id = data.get("cluster_id")
-        self.driver = data.get("driver")
-        self.driver_node_type_id = data.get("driver_node_type_id")
-        self.executors = data.get("executors")
-        self.node_type_id = data.get("node_type_id")
-        self.spark_context_id = data.get("spark_context_id")
-        self.cluster_name = data.get("cluster_name")
-        self.spark_version = data.get("spark_version")
+        self.cluster_id = payload.get("cluster_id")
+        self.driver = payload.get("driver")
+        self.driver_node_type_id = payload.get("driver_node_type_id")
+        self.executors = payload.get("executors")
+        self.node_type_id = payload.get("node_type_id")
+        self.spark_context_id = payload.get("spark_context_id")
+        self.cluster_name = payload.get("cluster_name")
+        self.spark_version = payload.get("spark_version")
 
     def __str__(self):
         s_list = [
