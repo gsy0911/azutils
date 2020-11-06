@@ -17,7 +17,7 @@ def get_version(init_file_path):
 
 # get __version__ from __init__.py
 init = os.path.join(
-    os.path.dirname(__file__), '{your_module}', '__init__.py'
+    os.path.dirname(__file__), 'azutils', '__init__.py'
 )
 VERSION = get_version(init_file_path=init)
 
@@ -26,18 +26,17 @@ with open("README.md", "r") as fh:
 
 
 setuptools.setup(
-    name="{your_module}",
+    name="azutils",
     version=VERSION,
-    author="{your_name}",
-    author_email="{your_email}",
-    description="{description}",
+    author="gsy0911",
+    author_email="yoshiki0911@gmail.com",
+    description="Utilities for Azure",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="{github_account_etc}",
+    url="https://github.com/gsy0911/azutils",
     packages=setuptools.find_packages(),
     install_requires=[
-        "some",
-        "package"
+        "requests"
     ],
     license="MIT",
     classifiers=[
@@ -51,5 +50,5 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License"
     ],
     python_requires='>=3.6',
-    keywords=["keyword", "here"]
+    keywords=["azure", "databricks"]
 )
