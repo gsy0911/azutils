@@ -1,5 +1,6 @@
 import requests
-from typing import List, Optional
+from typing import List, Optional, Union
+from ._databricks import Databricks, DatabricksEvents
 
 
 class DatabricksClient:
@@ -13,16 +14,20 @@ class DatabricksClient:
         self._base_url = f"https://{self._region}.azuredatabricks.net/api/2.0"
         self._headers = {"Authorization": f"Bearer {self._token}"}
 
-    def clusters_list(self) -> dict:
+    def clusters_list(self, raw=False) -> [dict, list]:
         url = f"{self._base_url}/clusters/list"
 
-        res = requests.get(url, headers=self._headers)
-        return res.json()
+        response = requests.get(url, headers=self._headers)
+        if raw:
+            return response.json()
+        else:
+            return [Databricks(cluster) for cluster in response.json()['clusters']]
 
     def clusters_events(
             self,
             cluster_id: str,
-            page_limit: int = 500) -> List[dict]:
+            page_limit: int = 500,
+            raw=False) -> Union[List[dict], List[DatabricksEvents]]:
         result_list = []
         response = self._clusters_events(cluster_id=cluster_id)
         result_list.extend(response['events'])
@@ -33,7 +38,10 @@ class DatabricksClient:
             offset = next_page['offset']
             response = self._clusters_events(cluster_id=cluster_id, end_time=end_time, offset=offset)
             result_list.extend(response['events'])
-        return result_list
+        if raw:
+            return result_list
+        else:
+            return [DatabricksEvents(event) for event in result_list]
 
     def _clusters_events(
             self,
