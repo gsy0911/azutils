@@ -115,7 +115,33 @@ class DatabricksSetting:
 
     @staticmethod
     def get_from_databricks_event(databricks_event: List[DatabricksEvents]):
-        pass
+        status_list = []
+        start_timestamp = None
+        end_timestamp = None
+        latest_databricks = None
+        for event in databricks_event[::-1]:
+            if event.type == "EDITED":
+                if start_timestamp is None:
+                    start_timestamp = event.timestamp
+                else:
+                    start_timestamp = event.timestamp - 1
+                end_timestamp = event.timestamp
+                databricks_setting = DatabricksSetting(
+                    start_timestamp=start_timestamp,
+                    end_timestamp=end_timestamp,
+                    databricks=Databricks(event.details['previous_attributes']))
+                status_list.append(databricks_setting)
+
+                latest_databricks = Databricks(event.details['attributes'])
+
+        if latest_databricks is not None:
+            # add latest Databricks
+            databricks_setting = DatabricksSetting(
+                start_timestamp=end_timestamp + 1,
+                end_timestamp=end_timestamp + 2,
+                databricks=latest_databricks)
+            status_list.append(databricks_setting)
+        return status_list
 
     def __str__(self):
         s_list = [
@@ -133,6 +159,9 @@ class DatabricksSettingHistory:
     def append(self, databricks_setting: DatabricksSetting):
         self._databricks_setting_list.append(databricks_setting)
 
+    def extend(self, databricks_setting_list: List[DatabricksSetting]):
+        self._databricks_setting_list.extend(databricks_setting_list)
+
     def get_at(self, timestamp) -> Databricks:
         initial_setting = self._databricks_setting_list[0]
         initial_cluster = initial_setting.databricks
@@ -142,12 +171,13 @@ class DatabricksSettingHistory:
 
         # get latest or initial cluster
         for cluster in self._databricks_setting_list[1:]:
+            print(cluster)
             if initial_timestamp >= cluster.end_timestamp:
                 initial_timestamp = cluster.start_timestamp
-                initial_cluster = cluster
+                initial_cluster = cluster.databricks
             elif latest_timestamp <= cluster.start_timestamp:
                 latest_timestamp = cluster.end_timestamp
-                latest_cluster = cluster
+                latest_cluster = cluster.databricks
             elif cluster.start_timestamp <= timestamp <= cluster.end_timestamp:
                 return cluster.databricks
 
