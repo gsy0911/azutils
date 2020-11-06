@@ -1,3 +1,4 @@
+from datetime import datetime, timezone, timedelta
 
 
 class Databricks:
@@ -22,3 +23,23 @@ class Databricks:
 
         ]
         return "\n".join(s_list)
+
+
+class DatabricksEvents:
+    """
+    class for single DatabricksEvents
+
+    See Also: https://docs.databricks.com/dev-tools/api/latest/clusters.html#events
+    """
+
+    def __init__(self, payload):
+        self.cluster_id = payload.get("cluster_id")
+        self.timestamp = payload.get("timestamp")
+        self.dt = datetime.fromtimestamp(int(self.timestamp / 1000), timezone(timedelta(hours=9)))
+        self.ymd = self.dt.strftime("%Y-%m-%d")
+        self.hms = self.dt.strftime("%H:%M:%S")
+        self.type = payload.get("type")
+        self.details = payload.get("details")
+
+    def __str__(self):
+        return f"{self.ymd}T{self.hms}: {self.type}"
