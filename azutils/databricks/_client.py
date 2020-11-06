@@ -1,6 +1,6 @@
 import requests
 from typing import List, Optional, Union
-from ._databricks import Databricks, DatabricksEvents
+from ._databricks import Databricks, DatabricksEvents, DataBricksRunningTime
 
 
 class DatabricksClient:
@@ -56,3 +56,7 @@ class DatabricksClient:
             payload['offset'] = offset
         response = requests.post(url, json=payload, headers=self._headers)
         return response.json()
+
+    def cluster_running_time(self, cluster_id: str, page_limit: int = 500):
+        cluster_events = self.clusters_events(cluster_id=cluster_id, page_limit=page_limit)
+        return DataBricksRunningTime.get_from_databricks_event(cluster_events)
