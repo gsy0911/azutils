@@ -1,4 +1,5 @@
 import requests
+from typing import Optional
 
 
 class DatabricksClient:
@@ -18,8 +19,12 @@ class DatabricksClient:
         res = requests.get(url, headers=self._headers)
         return res.json()
 
-    def clusters_events(self, cluster_id: str, timestamp=None, offset=None, page_limit=500) -> dict:
+    def clusters_events(self, cluster_id: str, timestamp: Optional[int] = None, offset: Optional[int] = None) -> dict:
         url = f"{self._base_url}/clusters/events"
         payload = {"cluster_id": cluster_id}
+        if timestamp is not None:
+            payload['timestamp'] = timestamp
+        if offset is not None:
+            payload['offset'] = offset
         res = requests.post(url, json=payload, headers=self._headers)
         return res.json()
