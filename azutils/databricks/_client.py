@@ -10,6 +10,7 @@ from ._databricks import (
     DatabricksSetting,
     DatabricksSettingHistory
 )
+from .utils import convert_datetime_to_milli_epoch
 
 
 class DatabricksClient:
@@ -33,26 +34,6 @@ class DatabricksClient:
         else:
             return [Databricks(cluster) for cluster in response.json()['clusters']]
 
-    @staticmethod
-    def _convert_datetime_to_milli_epoch(input_time):
-        """
-        Convert str or epoch-int to epoch-milli-int
-
-        Args:
-            input_time: ISO8601-format datetime, or epochtime
-
-        Returns:
-
-        """
-        if type(input_time) is str:
-            start_timestamp = int(datetime.fromisoformat(input_time).timestamp() * 1000)
-            return start_timestamp
-        elif type(input_time) is int:
-            if len(str(input_time)) == 13:
-                return input_time
-            elif len(str(input_time)) == 10:
-                return input_time * 1000
-
     def clusters_events(
             self,
             cluster_id: str,
@@ -61,8 +42,8 @@ class DatabricksClient:
             page_limit: int = 500,
             raw=False) -> Union[List[dict], List[DatabricksEvents]]:
 
-        start_timestamp = self._convert_datetime_to_milli_epoch(start_time)
-        end_timestamp = self._convert_datetime_to_milli_epoch(end_time)
+        start_timestamp = convert_datetime_to_milli_epoch(start_time)
+        end_timestamp = convert_datetime_to_milli_epoch(end_time)
         result_list = []
         response = self._clusters_events(
             cluster_id=cluster_id,

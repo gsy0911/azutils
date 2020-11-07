@@ -1,5 +1,6 @@
 from datetime import datetime, timezone, timedelta
 from typing import List
+from .utils import convert_datetime_to_milli_epoch
 
 
 class Databricks:
@@ -124,7 +125,8 @@ class DatabricksSetting:
                 if start_timestamp is None:
                     start_timestamp = event.timestamp
                 else:
-                    start_timestamp = event.timestamp - 1
+                    if end_timestamp is not None:
+                        start_timestamp = end_timestamp
                 end_timestamp = event.timestamp
                 databricks_setting = DatabricksSetting(
                     start_timestamp=start_timestamp,
@@ -137,8 +139,8 @@ class DatabricksSetting:
         if latest_databricks is not None:
             # add latest Databricks
             databricks_setting = DatabricksSetting(
-                start_timestamp=end_timestamp + 1,
-                end_timestamp=end_timestamp + 2,
+                start_timestamp=end_timestamp + 1000,
+                end_timestamp=end_timestamp + 2000,
                 databricks=latest_databricks)
             status_list.append(databricks_setting)
         return status_list
@@ -163,6 +165,15 @@ class DatabricksSettingHistory:
         self._databricks_setting_list.extend(databricks_setting_list)
 
     def get_at(self, timestamp) -> Databricks:
+        """
+
+        Args:
+            timestamp: ISO8601 datetime format "%Y-%m-%d", "%Y-%m-%dT%H-%M-%S", or timestamp
+
+        Returns:
+
+        """
+        timestamp = convert_datetime_to_milli_epoch(timestamp)
         initial_setting = self._databricks_setting_list[0]
         initial_cluster = initial_setting.databricks
         initial_timestamp = initial_setting.start_timestamp
@@ -171,16 +182,15 @@ class DatabricksSettingHistory:
 
         # get latest or initial cluster
         for cluster in self._databricks_setting_list[1:]:
-            print(cluster)
             if initial_timestamp >= cluster.end_timestamp:
                 initial_timestamp = cluster.start_timestamp
                 initial_cluster = cluster.databricks
             elif latest_timestamp <= cluster.start_timestamp:
                 latest_timestamp = cluster.end_timestamp
                 latest_cluster = cluster.databricks
-            elif cluster.start_timestamp <= timestamp <= cluster.end_timestamp:
+            #
+            if cluster.start_timestamp <= timestamp <= cluster.end_timestamp:
                 return cluster.databricks
-
         if timestamp <= initial_timestamp:
             return initial_cluster
         elif timestamp >= latest_timestamp:
