@@ -1,5 +1,7 @@
 import requests
 from typing import List, Optional, Union
+
+from cachetools import cached
 from ._databricks import (
     Databricks,
     DatabricksEvents,
@@ -20,6 +22,7 @@ class DatabricksClient:
         self._base_url = f"https://{self._region}.azuredatabricks.net/api/2.0"
         self._headers = {"Authorization": f"Bearer {self._token}"}
 
+    @cached(cache={})
     def clusters_list(self, raw=False) -> [dict, list]:
         url = f"{self._base_url}/clusters/list"
 
@@ -29,6 +32,7 @@ class DatabricksClient:
         else:
             return [Databricks(cluster) for cluster in response.json()['clusters']]
 
+    @cached(cache={})
     def clusters_events(
             self,
             cluster_id: str,
