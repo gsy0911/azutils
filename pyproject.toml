@@ -8,12 +8,12 @@ authors = ["yoshiki <yoshiki0911@gmail.com>"]
 python = "^3.6"
 requests = "^2.24.0"
 cachetools = "^4.1.1"
-
-[tool.poetry.dev-dependencies]
-jupyterlab = "^2.1.1"
 pytest = "^5.4.1"
 pytest-cov = "^2.8.1"
 pytest-mock = "^3.1.0"
+
+[tool.poetry.dev-dependencies]
+jupyterlab = "^2.1.1"
 sphinx = "^3.1.1"
 
 [build-system]
