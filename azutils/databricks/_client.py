@@ -88,29 +88,56 @@ class DatabricksClient:
         else:
             return [DatabricksEvents(event) for event in result_list]
 
+    @cached(cache={})
     def _clusters_events(
             self,
             cluster_id: str,
+            start_time: Optional[int] = None,
             end_time: Optional[int] = None,
-            offset: Optional[int] = None) -> dict:
+            offset: Optional[int] = None,
+            limit=500) -> dict:
         url = f"{self._base_url}/clusters/events"
-        payload = {"cluster_id": cluster_id}
+        payload = {
+            "cluster_id": cluster_id,
+            "limit": limit
+        }
+        if start_time is not None:
+            payload['start_time'] = start_time
         if end_time is not None:
             payload['end_time'] = end_time
         if offset is not None:
             payload['offset'] = offset
         response = requests.post(url, json=payload, headers=self._headers)
-        return response.json()
+        data = response.json()
+        return data
 
-    def cluster_running_time(self, cluster_id: str, page_limit: int = 500):
-        cluster_events = self.clusters_events(cluster_id=cluster_id, page_limit=page_limit)
+    def cluster_running_time(
+            self,
+            cluster_id: str,
+            start_time: Optional[Union[int, str]] = None,
+            end_time: Optional[Union[int, str]] = None,
+            page_limit: int = 500):
+        cluster_events = self.clusters_events(
+            cluster_id=cluster_id, start_time=start_time, end_time=end_time, page_limit=page_limit)
         return DataBricksRunningTime.get_from_databricks_event(cluster_events)
 
-    def cluster_settings(self, cluster_id: str, page_limit: int = 500):
-        cluster_events = self.clusters_events(cluster_id=cluster_id, page_limit=page_limit)
+    def cluster_settings(
+            self,
+            cluster_id: str,
+            start_time: Optional[Union[int, str]] = None,
+            end_time: Optional[Union[int, str]] = None,
+            page_limit: int = 500):
+        cluster_events = self.clusters_events(
+            cluster_id=cluster_id, start_time=start_time, end_time=end_time, page_limit=page_limit)
         return DatabricksSetting.get_from_databricks_event(cluster_events)
 
-    def cluster_history(self, cluster_id: str, page_limit: int = 500) -> DatabricksSettingHistory:
+    def cluster_history(
+            self,
+            cluster_id: str,
+            start_time: Optional[Union[int, str]] = None,
+            end_time: Optional[Union[int, str]] = None,
+            page_limit: int = 500) -> DatabricksSettingHistory:
         databricks_setting_history = DatabricksSettingHistory()
-        databricks_setting_history.extend(self.cluster_settings(cluster_id=cluster_id, page_limit=page_limit))
+        databricks_setting_history.extend(self.cluster_settings(
+            cluster_id=cluster_id, start_time=start_time, end_time=end_time, page_limit=page_limit))
         return databricks_setting_history
