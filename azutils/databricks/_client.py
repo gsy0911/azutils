@@ -26,6 +26,16 @@ class DatabricksClient:
 
     @cached(cache={})
     def clusters_list(self, raw=False) -> [dict, list]:
+        """
+
+        Args:
+            raw:
+
+        Returns:
+
+        See Also:
+            https://docs.databricks.com/dev-tools/api/latest/clusters.html#list
+        """
         url = f"{self._base_url}/clusters/list"
 
         response = requests.get(url, headers=self._headers)
@@ -50,6 +60,9 @@ class DatabricksClient:
             start_time=start_timestamp,
             end_time=end_timestamp
         )
+        if "events" not in response:
+            print(response)
+            return []
         result_list.extend(response['events'])
         for _ in range(page_limit):
             if "next_page" not in response:
@@ -122,3 +135,26 @@ class DatabricksClient:
         databricks_setting_history.extend(self.cluster_settings(
             cluster_id=cluster_id, start_time=start_time, end_time=end_time, page_limit=page_limit))
         return databricks_setting_history
+
+    def cluster_cost(
+            self,
+            cluster_id: str,
+            start_time: Optional[Union[int, str]],
+            end_time: Optional[Union[int, str]]):
+        payload = {
+            "cluster_id": cluster_id,
+            "start_time": start_time,
+            "end_time": end_time
+        }
+        running_time_list = self.cluster_running_time(**payload)
+        cluster_history = self.cluster_history(**payload)
+
+        cost_list = []
+        for r in running_time_list:
+            timestamp = r.start_timestamp
+            cluster = cluster_history.get_at(timestamp)
+            if cluster is None:
+                continue
+            cost = r.duration_sec * (cluster.driver_node_cost() + cluster.node_cost() * r.current_num_workers) / 3600
+            cost_list.append(cost)
+        return sum(cost_list)
