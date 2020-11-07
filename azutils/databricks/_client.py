@@ -1,4 +1,3 @@
-from datetime import datetime
 import requests
 from typing import List, Optional, Union
 
@@ -23,6 +22,12 @@ class DatabricksClient:
         self._region = region
         self._base_url = f"https://{self._region}.azuredatabricks.net/api/2.0"
         self._headers = {"Authorization": f"Bearer {self._token}"}
+
+    @cached(cache={})
+    def clusters_get(self, cluster_id):
+        url = f"{self._base_url}/clusters/get?cluster_id={cluster_id}"
+        response = requests.get(url, headers=self._headers)
+        return response.json()
 
     @cached(cache={})
     def clusters_list(self, raw=False) -> [dict, list]:
@@ -153,8 +158,9 @@ class DatabricksClient:
         for r in running_time_list:
             timestamp = r.start_timestamp
             cluster = cluster_history.get_at(timestamp)
+            # get current cluster info
             if cluster is None:
-                continue
+                cluster = Databricks(self.clusters_get(cluster_id=cluster_id))
             cost = r.duration_sec * (cluster.driver_node_cost() + cluster.node_cost() * r.current_num_workers) / 3600
             cost_list.append(cost)
         return sum(cost_list)

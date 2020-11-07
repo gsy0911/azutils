@@ -128,6 +128,9 @@ class DataBricksRunningTime:
 
 
 class DatabricksSetting:
+    """
+    Keep cluster-setting from start_timestamp to end_timestamp.
+    """
     def __init__(self, start_timestamp, end_timestamp, databricks: Databricks):
         self.start_timestamp = start_timestamp
         self.end_timestamp = end_timestamp
