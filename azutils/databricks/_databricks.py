@@ -1,5 +1,5 @@
 from datetime import datetime, timezone, timedelta
-from typing import List
+from typing import List, Optional
 from .utils import convert_datetime_to_milli_epoch
 
 
@@ -30,10 +30,12 @@ class Databricks:
         self.spark_version = payload.get("spark_version")
 
     def driver_node_cost(self):
-        return self.COST_INFO.get(self.driver_node_type_id, 0)
+        candidate_cost = self.COST_INFO.get(self.driver_node_type_id, 0)
+        return candidate_cost
 
     def node_cost(self):
-        return self.COST_INFO.get(self.node_type_id, 0)
+        candidate_cost = self.COST_INFO.get(self.node_type_id, 0)
+        return candidate_cost
 
     def __str__(self):
         s_list = [
@@ -102,14 +104,16 @@ class DataBricksRunningTime:
                 cluster_id = event.cluster_id
                 end_timestamp = event.timestamp
                 current_num_workers = event.details['current_num_workers']
-                status_list.append(DataBricksRunningTime(cluster_id, start_timestamp, end_timestamp, current_num_workers))
+                running_time = DataBricksRunningTime(cluster_id, start_timestamp, end_timestamp, current_num_workers)
+                status_list.append(running_time)
                 start_timestamp = end_timestamp + 1
 
             elif cluster_status == "RUNNING" and event.type == "TERMINATING":
                 cluster_id = event.cluster_id
                 cluster_status = "TERMINATED"
                 end_timestamp = event.timestamp
-                status_list.append(DataBricksRunningTime(cluster_id, start_timestamp, end_timestamp, current_num_workers))
+                running_time = DataBricksRunningTime(cluster_id, start_timestamp, end_timestamp, current_num_workers)
+                status_list.append(running_time)
                 start_timestamp = None
         return status_list
 
@@ -185,7 +189,7 @@ class DatabricksSettingHistory:
     def extend(self, databricks_setting_list: List[DatabricksSetting]):
         self._databricks_setting_list.extend(databricks_setting_list)
 
-    def get_at(self, timestamp) -> Databricks:
+    def get_at(self, timestamp) -> Optional[Databricks]:
         """
 
         Args:
@@ -195,6 +199,8 @@ class DatabricksSettingHistory:
 
         """
         timestamp = convert_datetime_to_milli_epoch(timestamp)
+        if len(self._databricks_setting_list) == 0:
+            return None
         initial_setting = self._databricks_setting_list[0]
         initial_cluster = initial_setting.databricks
         initial_timestamp = initial_setting.start_timestamp
