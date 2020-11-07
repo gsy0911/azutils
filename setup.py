@@ -36,6 +36,7 @@ setuptools.setup(
     url="https://github.com/gsy0911/azutils",
     packages=setuptools.find_packages(),
     install_requires=[
+        "cachetools",
         "requests"
     ],
     license="MIT",
