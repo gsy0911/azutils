@@ -185,7 +185,7 @@ class DatabricksClient:
             cluster = cluster_history.get_at(timestamp)
             # get current cluster info
             if cluster is None:
-                cluster = Databricks(self.clusters_get(cluster_id=cluster_id))
+                cluster = self.clusters_get(cluster_id=cluster_id)
             cost = r.duration_sec * (cluster.driver_node_cost() + cluster.node_cost() * r.current_num_workers) / 3600
             cost_list.append(cost)
         return sum(cost_list)

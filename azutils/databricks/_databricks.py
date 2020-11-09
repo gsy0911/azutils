@@ -3,22 +3,106 @@ from typing import List, Optional
 from .utils import convert_datetime_to_milli_epoch
 
 
-class Databricks:
-    COST_INFO = {
-            'Standard_DS3_v2': 79.408,
-            'Standard_DS4_v2': 158.816,
-            'Standard_D8s_v3': 124.992,
-            'Standard_DS5_v2': 317.632,
-            'Standard_D32s_v3': 499.968,
-            'Standard_D16s_v3': 249.984,
-            'Standard_D16_v3': 249.984,
-            'Standard_D32_v3': 499.968,
-            'Standard_DS12_v2': 96.208,
-            'Standard_D64s_v3': 999.936,
-            'Standard_F8s': 137.536,
-            'Standard_F4s': 68.768
-        }
+class DatabricksCost:
+    def __init__(self, workload: str, level: str, instance: str, vm_price: float, dbu_price: float):
+        self.workload = workload
+        self._level = level
+        self._instance_id = instance
+        self._vm_price = vm_price
+        self._dbu_price = dbu_price
+        self.node_type_id = "_".join([level, instance])
+        self.total_price = vm_price + dbu_price
 
+    def __str__(self):
+        s_list = [
+            f"* node_type_id: {self.node_type_id}",
+            f"  * vm_price: {self._vm_price}",
+            f"  * dbu_price: {self._dbu_price}"
+        ]
+        return "\n".join(s_list)
+
+
+class DatabricksCostReferences:
+    """
+
+    See Also:
+        https://azure.microsoft.com/ja-jp/pricing/details/databricks/
+    """
+    # workload constant
+    ALL_PURPOSE_COMPUTE = "UI"
+    JOBS_COMPUTE = "JOB"
+    # level constant
+    PREMIUM = "Premium"
+    STANDARD = "Standard"
+    COST_LIST = [
+        # ALL_PURPOSE_COMPUTE
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "DS3_v2", 45.808, 33.60),
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "DS4_v2", 91.616, 67.20),
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "DS5_v2", 183.232, 134.40),
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "D8s_v3", 57.792, 67.20),
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "D16s_v3", 115.584, 134.40),
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "D32s_v3", 231.168, 268.80),
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "D64s_v3", 462.336, 537.60),
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "D8_v3", 57.792, 67.20),
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "D16_v3", 115.584, 134.40),
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "D32_v3", 231.168, 268.80),
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "D64_v3", 462.336, 537.60),
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "DS12_v2", 51.408, 44.80),
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "DS13_v2", 102.816, 89.60),
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "DS14_v2", 205.520, 179.20),
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "DS15_v2", 256.928, 224.00),
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "F4s", 23.968, 44.80),
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "F8s", 47.936, 89.60),
+        # JOBS_COMPUTE
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "DS3_v2", 45.808, 12.60),
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "DS4_v2", 91.616, 25.20),
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "DS5_v2", 183.232, 50.40),
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "D8s_v3", 57.792, 25.20),
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "D16s_v3", 115.584, 50.40),
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "D32s_v3", 231.168, 100.80),
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "D64s_v3", 462.336, 201.60),
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "D8_v3", 57.792, 25.20),
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "D16_v3", 115.584, 50.40),
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "D32_v3", 231.168, 100.80),
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "D64_v3", 462.336, 201.60),
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "DS12_v2", 51.408, 16.80),
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "DS13_v2", 102.816, 33.60),
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "DS14_v2", 205.520, 67.20),
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "DS15_v2", 256.928, 84.00),
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "F4s", 23.968, 16.80),
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "F8s", 47.936, 33.60),
+    ]
+
+    @classmethod
+    def list(cls):
+        for cost in cls.COST_LIST:
+            print(cost)
+
+    @classmethod
+    def get(
+            cls,
+            *,
+            node_type_id: Optional[str] = None,
+            workload: Optional[str] = None,
+            level: Optional[str] = None,
+            instance: Optional[str] = None) -> Optional[DatabricksCost]:
+        if node_type_id is not None:
+            _node_type_id = node_type_id
+        else:
+            _node_type_id = "_".join([level, instance])
+
+        if workload is not None:
+            _workload = workload
+        else:
+            _workload = cls.ALL_PURPOSE_COMPUTE
+
+        for cost in cls.COST_LIST:
+            if cost.node_type_id == _node_type_id and cost.workload == _workload:
+                return cost
+        return None
+
+
+class Databricks:
     def __init__(self, payload):
         self.cluster_id = payload.get("cluster_id")
         self.driver = payload.get("driver")
@@ -28,14 +112,24 @@ class Databricks:
         self.spark_context_id = payload.get("spark_context_id")
         self.cluster_name = payload.get("cluster_name")
         self.spark_version = payload.get("spark_version")
+        self.cluster_source = payload.get("cluster_source")
 
     def driver_node_cost(self):
-        candidate_cost = self.COST_INFO.get(self.driver_node_type_id, 0)
-        return candidate_cost
+        candidate_cost = DatabricksCostReferences.get(
+            node_type_id=self.driver_node_type_id, workload=self.cluster_source)
+        if candidate_cost is None:
+            cost = 0
+        else:
+            cost = candidate_cost.total_price
+        return cost
 
     def node_cost(self):
-        candidate_cost = self.COST_INFO.get(self.node_type_id, 0)
-        return candidate_cost
+        candidate_cost = DatabricksCostReferences.get(node_type_id=self.node_type_id, workload=self.cluster_source)
+        if candidate_cost is None:
+            cost = 0
+        else:
+            cost = candidate_cost.total_price
+        return cost
 
     def __str__(self):
         s_list = [
@@ -44,6 +138,7 @@ class Databricks:
             f"  * spark_version: {self.spark_version}",
             f"  * driver_node_type: {self.driver_node_type_id}",
             f"  * node_type: {self.node_type_id}",
+            f"  * workload: {self.cluster_source}",
             f"  * cost: {self.driver_node_cost():.3f} + {self.node_cost():.3f} * NUM [YEN/HOUR]"
         ]
         return "\n".join(s_list)
