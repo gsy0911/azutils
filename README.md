@@ -1,5 +1,9 @@
 # azutils
 
+[![PythonVersion](https://img.shields.io/badge/python-3.6|3.7|3.8-blue.svg)](https://www.python.org/downloads/release/python-377/)
+[![PiPY](https://img.shields.io/pypi/v/azutils.svg)](https://pypi.org/project/azutils/)
+
+
 `azutils` is to provide convenient Python functions for Azure Services.
 
 * Databricks,
