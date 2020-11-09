@@ -35,7 +35,42 @@ class DatabricksCostReferences:
     PREMIUM = "Premium"
     STANDARD = "Standard"
     COST_LIST = [
-        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "DS3_v2", 45.808, 33.60)
+        # ALL_PURPOSE_COMPUTE
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "DS3_v2", 45.808, 33.60),
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "DS4_v2", 91.616, 67.20),
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "DS5_v2", 183.232, 134.40),
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "D8s_v3", 57.792, 67.20),
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "D16s_v3", 115.584, 134.40),
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "D32s_v3", 231.168, 268.80),
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "D64s_v3", 462.336, 537.60),
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "D8_v3", 57.792, 67.20),
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "D16_v3", 115.584, 134.40),
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "D32_v3", 231.168, 268.80),
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "D64_v3", 462.336, 537.60),
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "DS12_v2", 51.408, 44.80),
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "DS13_v2", 102.816, 89.60),
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "DS14_v2", 205.520, 179.20),
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "DS15_v2", 256.928, 224.00),
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "F4s", 23.968, 44.80),
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "F8s", 47.936, 89.60),
+        # JOBS_COMPUTE
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "DS3_v2", 45.808, 12.60),
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "DS4_v2", 91.616, 25.20),
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "DS5_v2", 183.232, 50.40),
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "D8s_v3", 57.792, 25.20),
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "D16s_v3", 115.584, 50.40),
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "D32s_v3", 231.168, 100.80),
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "D64s_v3", 462.336, 201.60),
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "D8_v3", 57.792, 25.20),
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "D16_v3", 115.584, 50.40),
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "D32_v3", 231.168, 100.80),
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "D64_v3", 462.336, 201.60),
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "DS12_v2", 51.408, 16.80),
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "DS13_v2", 102.816, 33.60),
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "DS14_v2", 205.520, 67.20),
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "DS15_v2", 256.928, 84.00),
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "F4s", 23.968, 16.80),
+        DatabricksCost(JOBS_COMPUTE, STANDARD, "F8s", 47.936, 33.60),
     ]
 
     @classmethod
