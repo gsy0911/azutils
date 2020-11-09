@@ -20,6 +20,53 @@ class DatabricksCost:
             f"  * dbu_price: {self._dbu_price}"
         ]
         return "\n".join(s_list)
+
+
+class DatabricksCostReferences:
+    """
+
+    See Also:
+        https://azure.microsoft.com/ja-jp/pricing/details/databricks/
+    """
+    # workload constant
+    ALL_PURPOSE_COMPUTE = "UI"
+    JOBS_COMPUTE = "JOB"
+    # level constant
+    PREMIUM = "Premium"
+    STANDARD = "Standard"
+    COST_LIST = [
+        DatabricksCost(ALL_PURPOSE_COMPUTE, STANDARD, "DS3_v2", 45.808, 33.60)
+    ]
+
+    @classmethod
+    def list(cls):
+        for cost in cls.COST_LIST:
+            print(cost)
+
+    @classmethod
+    def get(
+            cls,
+            *,
+            node_type_id: Optional[str] = None,
+            workload: Optional[str] = None,
+            level: Optional[str] = None,
+            instance: Optional[str] = None) -> Optional[DatabricksCost]:
+        if node_type_id is not None:
+            _node_type_id = node_type_id
+        else:
+            _node_type_id = "_".join([level, instance])
+
+        if workload is not None:
+            _workload = workload
+        else:
+            _workload = cls.ALL_PURPOSE_COMPUTE
+
+        for cost in cls.COST_LIST:
+            if cost.node_type_id == _node_type_id and cost.workload == _workload:
+                return cost
+        return None
+
+
 class Databricks:
     COST_INFO = {
             'Standard_DS3_v2': 79.408,
