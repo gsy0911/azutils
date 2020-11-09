@@ -40,7 +40,7 @@ class DatabricksClient:
         return response.json()
 
     @cached(cache={})
-    def clusters_list(self, raw=False) -> [dict, list]:
+    def clusters_list(self, raw=False) -> [dict, List[Databricks]]:
         """
 
         Args:
@@ -154,8 +154,8 @@ class DatabricksClient:
     def cluster_cost(
             self,
             cluster_id: str,
-            start_time: Optional[Union[int, str]],
-            end_time: Optional[Union[int, str]]):
+            start_time: Optional[Union[int, str]] = None,
+            end_time: Optional[Union[int, str]] = None):
         payload = {
             "cluster_id": cluster_id,
             "start_time": start_time,
