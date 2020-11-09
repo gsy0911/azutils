@@ -49,6 +49,39 @@ class Databricks:
         return "\n".join(s_list)
 
 
+class DatabricksJob:
+    def __init__(self, payload: dict):
+        self.job_id = payload.get("job_id")
+        self.run_id = payload.get("run_id")
+        self.run_name = payload.get("run_name")
+        self.run_page_url = payload.get("run_page_url")
+        self.run_type = payload.get("run_type")
+        self.number_in_job = payload.get("number_in_job")
+        self.state = payload.get("state")
+        payload_for_databricks = payload['cluster_spec']['new_cluster']
+        payload_for_databricks.update(payload['cluster_instance'])
+        payload_for_databricks.update(
+            {
+                "driver_node_type_id": payload['cluster_spec']['new_cluster']['node_type_id'],
+                "cluster_name": payload.get("run_name")
+            }
+        )
+        self.databricks = Databricks(payload_for_databricks)
+        self.libraries = payload.get("libraries")
+        self.start_time = payload.get("start_time")
+        self.setup_duration = payload.get("setup_duration")
+        self.execution_duration = payload.get("execution_duration")
+
+    def __str__(self):
+        s_list = [
+            str(self.databricks),
+            f"  * job_id: {self.job_id}",
+            f"  * run_id: {self.run_id}",
+            f"  * start_at: {self.start_time}",
+        ]
+        return "\n".join(s_list)
+
+
 class DatabricksEvents:
     """
     class for single DatabricksEvents
