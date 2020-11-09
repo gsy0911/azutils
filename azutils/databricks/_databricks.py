@@ -103,21 +103,6 @@ class DatabricksCostReferences:
 
 
 class Databricks:
-    COST_INFO = {
-            'Standard_DS3_v2': 79.408,
-            'Standard_DS4_v2': 158.816,
-            'Standard_D8s_v3': 124.992,
-            'Standard_DS5_v2': 317.632,
-            'Standard_D32s_v3': 499.968,
-            'Standard_D16s_v3': 249.984,
-            'Standard_D16_v3': 249.984,
-            'Standard_D32_v3': 499.968,
-            'Standard_DS12_v2': 96.208,
-            'Standard_D64s_v3': 999.936,
-            'Standard_F8s': 137.536,
-            'Standard_F4s': 68.768
-        }
-
     def __init__(self, payload):
         self.cluster_id = payload.get("cluster_id")
         self.driver = payload.get("driver")
@@ -127,14 +112,24 @@ class Databricks:
         self.spark_context_id = payload.get("spark_context_id")
         self.cluster_name = payload.get("cluster_name")
         self.spark_version = payload.get("spark_version")
+        self.cluster_source = payload.get("cluster_source")
 
     def driver_node_cost(self):
-        candidate_cost = self.COST_INFO.get(self.driver_node_type_id, 0)
-        return candidate_cost
+        candidate_cost = DatabricksCostReferences.get(
+            node_type_id=self.driver_node_type_id, workload=self.cluster_source)
+        if candidate_cost is None:
+            cost = 0
+        else:
+            cost = candidate_cost.total_price
+        return cost
 
     def node_cost(self):
-        candidate_cost = self.COST_INFO.get(self.node_type_id, 0)
-        return candidate_cost
+        candidate_cost = DatabricksCostReferences.get(node_type_id=self.node_type_id, workload=self.cluster_source)
+        if candidate_cost is None:
+            cost = 0
+        else:
+            cost = candidate_cost.total_price
+        return cost
 
     def __str__(self):
         s_list = [
@@ -143,6 +138,7 @@ class Databricks:
             f"  * spark_version: {self.spark_version}",
             f"  * driver_node_type: {self.driver_node_type_id}",
             f"  * node_type: {self.node_type_id}",
+            f"  * workload: {self.cluster_source}",
             f"  * cost: {self.driver_node_cost():.3f} + {self.node_cost():.3f} * NUM [YEN/HOUR]"
         ]
         return "\n".join(s_list)
