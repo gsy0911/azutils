@@ -7,7 +7,8 @@ from ._databricks import (
     DatabricksEvents,
     DataBricksRunningTime,
     DatabricksSetting,
-    DatabricksSettingHistory
+    DatabricksSettingHistory,
+    DatabricksJob
 )
 from .utils import convert_datetime_to_milli_epoch
 
@@ -22,6 +23,15 @@ class DatabricksClient:
         self._region = region
         self._base_url = f"https://{self._region}.azuredatabricks.net/api/2.0"
         self._headers = {"Authorization": f"Bearer {self._token}"}
+
+    @cached(cache={})
+    def jobs_runs_get(self, run_id: str, raw=False):
+        url = f"{self._base_url}/jobs/runs/get?run_id={run_id}"
+        response = requests.get(url, headers=self._headers)
+        if raw:
+            return response.json()
+        else:
+            return DatabricksJob(response.json())
 
     @cached(cache={})
     def clusters_get(self, cluster_id):
