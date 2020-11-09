@@ -3,6 +3,23 @@ from typing import List, Optional
 from .utils import convert_datetime_to_milli_epoch
 
 
+class DatabricksCost:
+    def __init__(self, workload: str, level: str, instance: str, vm_price: float, dbu_price: float):
+        self.workload = workload
+        self._level = level
+        self._instance_id = instance
+        self._vm_price = vm_price
+        self._dbu_price = dbu_price
+        self.node_type_id = "_".join([level, instance])
+        self.total_price = vm_price + dbu_price
+
+    def __str__(self):
+        s_list = [
+            f"* node_type_id: {self.node_type_id}",
+            f"  * vm_price: {self._vm_price}",
+            f"  * dbu_price: {self._dbu_price}"
+        ]
+        return "\n".join(s_list)
 class Databricks:
     COST_INFO = {
             'Standard_DS3_v2': 79.408,
