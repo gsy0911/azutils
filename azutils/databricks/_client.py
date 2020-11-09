@@ -7,7 +7,8 @@ from ._databricks import (
     DatabricksEvents,
     DataBricksRunningTime,
     DatabricksSetting,
-    DatabricksSettingHistory
+    DatabricksSettingHistory,
+    DatabricksJob
 )
 from .utils import convert_datetime_to_milli_epoch
 
@@ -24,13 +25,37 @@ class DatabricksClient:
         self._headers = {"Authorization": f"Bearer {self._token}"}
 
     @cached(cache={})
-    def clusters_get(self, cluster_id):
-        url = f"{self._base_url}/clusters/get?cluster_id={cluster_id}"
+    def jobs_runs_get(self, run_id: Union[int, str], raw=False) -> Union[dict, DatabricksJob]:
+        """
+
+        Args:
+            run_id: run_id, ex: "5000" or 5000.
+            raw: return response.json() or DatabricksJob-class
+
+        Returns:
+            dict or DatabricksJob
+
+        See Also:
+            https://docs.databricks.com/dev-tools/api/latest/jobs.html#runs-get
+        """
+        url = f"{self._base_url}/jobs/runs/get?run_id={run_id}"
         response = requests.get(url, headers=self._headers)
-        return response.json()
+        if raw:
+            return response.json()
+        else:
+            return DatabricksJob(response.json())
 
     @cached(cache={})
-    def clusters_list(self, raw=False) -> [dict, list]:
+    def clusters_get(self, cluster_id: str, raw=False):
+        url = f"{self._base_url}/clusters/get?cluster_id={cluster_id}"
+        response = requests.get(url, headers=self._headers)
+        if raw:
+            return response.json()
+        else:
+            return Databricks(response.json())
+
+    @cached(cache={})
+    def clusters_list(self, raw=False) -> [dict, List[Databricks]]:
         """
 
         Args:
@@ -144,8 +169,8 @@ class DatabricksClient:
     def cluster_cost(
             self,
             cluster_id: str,
-            start_time: Optional[Union[int, str]],
-            end_time: Optional[Union[int, str]]):
+            start_time: Optional[Union[int, str]] = None,
+            end_time: Optional[Union[int, str]] = None):
         payload = {
             "cluster_id": cluster_id,
             "start_time": start_time,
@@ -160,7 +185,7 @@ class DatabricksClient:
             cluster = cluster_history.get_at(timestamp)
             # get current cluster info
             if cluster is None:
-                cluster = Databricks(self.clusters_get(cluster_id=cluster_id))
+                cluster = self.clusters_get(cluster_id=cluster_id)
             cost = r.duration_sec * (cluster.driver_node_cost() + cluster.node_cost() * r.current_num_workers) / 3600
             cost_list.append(cost)
         return sum(cost_list)
