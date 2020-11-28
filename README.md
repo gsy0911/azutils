@@ -40,4 +40,11 @@ for cluster in cluster_list:
 
 cluster_id = "XXXX-XXXXXX-xxxxxxx"
 print(dc.cluster_cost(cluster_id=cluster_id, start_time="2020-10-01", end_time="2020-10-31"))
+
+
+# display cluster usage with `seaborn`
+cluster_id_1 = "XXXX-XXXXXX-xxxxxx1"
+cluster_id_2 = "XXXX-XXXXXX-xxxxxx2"
+dc.cluster_running_time_as_sns(cluster_id=[cluster_id_1, cluster_id_2])
+
 ```
