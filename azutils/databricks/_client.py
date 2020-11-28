@@ -91,14 +91,12 @@ class DatabricksClient:
             end_time=end_timestamp
         )
         if "events" not in response:
-            print(response)
             return []
         result_list.extend(response['events'])
         for _ in range(page_limit):
             if "next_page" not in response:
                 break
             next_page = response['next_page']
-            print(next_page)
             end_timestamp = next_page['end_time']
             offset = next_page['offset']
             response = self._clusters_events(

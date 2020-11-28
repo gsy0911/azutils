@@ -1,5 +1,5 @@
 from datetime import datetime, timezone, timedelta
-from typing import List, Optional
+from typing import List, Optional, Union
 from .utils import convert_datetime_to_milli_epoch
 
 
@@ -222,8 +222,23 @@ class DataBricksRunningTime:
         start_timestamp = None
         current_num_workers = None
         for event in databricks_event[::-1]:
+            if cluster_status == "TERMINATED" and event.type == "CREATING":
+                cluster_status = "CREATING"
+                start_timestamp = event.timestamp
+                _cluster_num_candidate: Union[dict, int] = event.details.get("autoscale", 1)
+                if type(_cluster_num_candidate) is dict:
+                    current_num_workers = _cluster_num_candidate.get("min_workers")
 
-            if cluster_status == "TERMINATED" and event.type == "RUNNING":
+            elif cluster_status == "CREATING" and event.type == "RUNNING":
+                cluster_status = "RUNNING"
+                end_timestamp = event.timestamp
+                current_num_workers = event.details['current_num_workers']
+                cluster_id = event.cluster_id
+                running_time = DataBricksRunningTime(cluster_id, start_timestamp, end_timestamp, current_num_workers)
+                status_list.append(running_time)
+                start_timestamp = end_timestamp + 1
+
+            elif cluster_status == "TERMINATED" and event.type == "RUNNING":
                 cluster_status = "RUNNING"
                 start_timestamp = event.timestamp
                 current_num_workers = event.details['current_num_workers']
