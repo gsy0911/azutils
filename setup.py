@@ -37,7 +37,8 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=[
         "cachetools",
-        "requests"
+        "requests",
+        "seaborn"
     ],
     license="MIT",
     classifiers=[
