@@ -2,6 +2,8 @@ import requests
 from typing import List, Optional, Union
 
 from cachetools import cached
+import pandas as pd
+
 from ._databricks import (
     Databricks,
     DatabricksEvents,
@@ -179,6 +181,27 @@ class DatabricksClient:
         response = requests.post(url, json=payload, headers=self._headers)
         data = response.json()
         return data
+
+    def cluster_running_time_as_df(
+            self,
+            cluster_id: str,
+            start_time: Optional[Union[int, str]] = None,
+            end_time: Optional[Union[int, str]] = None,
+            page_limit: int = 500
+    ) -> pd.DataFrame:
+        running_time_list = self.cluster_running_time(
+            cluster_id=cluster_id,
+            start_time=start_time,
+            end_time=end_time,
+            page_limit=page_limit
+        )
+        data_list = [r.dumps() for r in running_time_list]
+
+        df = pd.DataFrame(data_list)
+        df.index = pd.to_datetime(df['start'])
+        df = df.asfreq("T", method="bfill")
+        df = df.loc[:, ["cluster_id", "current_num_workers"]]
+        return df
 
     def cluster_running_time(
             self,
