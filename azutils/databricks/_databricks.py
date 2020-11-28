@@ -370,3 +370,14 @@ class DatabricksSettingHistory:
             return latest_cluster
         else:
             raise ValueError("Out of range.")
+
+
+class DatabricksView:
+    def __init__(self, payload: dict):
+        self.content = payload['content']
+        self.name = payload['name']
+        self.type = payload['type']
+
+    @classmethod
+    def get_from_runs_export(cls, payload):
+        return [DatabricksView(p) for p in payload]

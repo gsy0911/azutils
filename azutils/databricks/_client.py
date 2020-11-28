@@ -8,7 +8,8 @@ from ._databricks import (
     DataBricksRunningTime,
     DatabricksSetting,
     DatabricksSettingHistory,
-    DatabricksJob
+    DatabricksJob,
+    DatabricksView
 )
 from .utils import convert_datetime_to_milli_epoch
 
@@ -84,6 +85,27 @@ class DatabricksClient:
             return response.json()
         else:
             return [Databricks(cluster) for cluster in response.json()['clusters']]
+
+    @cached(cache={})
+    def jobs_runs_export(self, run_id: str, raw=False) -> [dict, List[DatabricksView]]:
+        """
+
+        Args:
+            run_id:
+            raw:
+
+        Returns:
+
+        See Also:
+            https://docs.databricks.com/dev-tools/api/latest/jobs.html#runs-export
+        """
+        url = f"{self._base_url}/jobs/runs/export?run_id={run_id}"
+
+        response = requests.get(url, headers=self._headers)
+        if raw:
+            return response.json()
+        else:
+            return DatabricksView.get_from_runs_export(response.json())
 
     def clusters_events(
             self,
