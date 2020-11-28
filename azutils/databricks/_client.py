@@ -2,6 +2,9 @@ import requests
 from typing import List, Optional, Union
 
 from cachetools import cached
+import pandas as pd
+import seaborn as sns
+
 from ._databricks import (
     Databricks,
     DatabricksEvents,
@@ -12,6 +15,9 @@ from ._databricks import (
     DatabricksView
 )
 from .utils import convert_datetime_to_milli_epoch
+
+# set seaborn theme
+sns.set(style='darkgrid')
 
 
 class DatabricksClient:
@@ -179,6 +185,61 @@ class DatabricksClient:
         response = requests.post(url, json=payload, headers=self._headers)
         data = response.json()
         return data
+
+    def cluster_running_time_as_sns(
+            self,
+            cluster_id: Union[str, List[str]],
+            start_time: Optional[Union[int, str]] = None,
+            end_time: Optional[Union[int, str]] = None,
+            page_limit: int = 500,
+            **kwargs
+    ):
+        df = self.cluster_running_time_as_df(
+            cluster_id=cluster_id,
+            start_time=start_time,
+            end_time=end_time,
+            page_limit=page_limit
+        )
+        df['time'] = df.index
+        data_df = df.pivot(index="time", columns="cluster_id", values="current_num_workers")
+        return sns.lineplot(data=data_df, **kwargs)
+
+    def cluster_running_time_as_df(
+            self,
+            cluster_id: Union[str, List[str]],
+            start_time: Optional[Union[int, str]] = None,
+            end_time: Optional[Union[int, str]] = None,
+            page_limit: int = 500
+    ) -> pd.DataFrame:
+        if type(cluster_id) is str:
+            running_time_list = self.cluster_running_time(
+                cluster_id=cluster_id,
+                start_time=start_time,
+                end_time=end_time,
+                page_limit=page_limit
+            )
+            data_list = [r.dumps() for r in running_time_list]
+
+            df = pd.DataFrame(data_list)
+            df.index = pd.to_datetime(df['start'])
+            df = df.asfreq("T", method="bfill")
+            return df
+        elif type(cluster_id) is list:
+            df_list = []
+            for c in cluster_id:
+                running_time_list = self.cluster_running_time(
+                    cluster_id=c,
+                    start_time=start_time,
+                    end_time=end_time,
+                    page_limit=page_limit
+                )
+                data_list = [r.dumps() for r in running_time_list]
+                df = pd.DataFrame(data_list)
+                df.index = pd.to_datetime(df['start'])
+                df = df.asfreq("T", method="bfill")
+                df_list.append(df)
+            return pd.concat(df_list)
+        raise ValueError("type of the `cluster_id` not matched")
 
     def cluster_running_time(
             self,

@@ -260,6 +260,16 @@ class DataBricksRunningTime:
                 start_timestamp = None
         return status_list
 
+    def dumps(self) -> dict:
+        return {
+            "cluster_id": self.cluster_id,
+            "current_num_workers": self.current_num_workers,
+            "start_timestamp": self.start_timestamp,
+            "end_timestamp": self.end_timestamp,
+            "start": f"{self.start_ymd}T{self.start_hms}",
+            "end": f"{self.end_ymd}T{self.end_hms}"
+        }
+
     def __str__(self):
         s_list = [
             f"* {self.duration_sec / 60: 0.1f}[min]",
