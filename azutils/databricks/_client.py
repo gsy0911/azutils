@@ -184,24 +184,40 @@ class DatabricksClient:
 
     def cluster_running_time_as_df(
             self,
-            cluster_id: str,
+            cluster_id: Union[str, List[str]],
             start_time: Optional[Union[int, str]] = None,
             end_time: Optional[Union[int, str]] = None,
             page_limit: int = 500
     ) -> pd.DataFrame:
-        running_time_list = self.cluster_running_time(
-            cluster_id=cluster_id,
-            start_time=start_time,
-            end_time=end_time,
-            page_limit=page_limit
-        )
-        data_list = [r.dumps() for r in running_time_list]
+        if type(cluster_id) is str:
+            running_time_list = self.cluster_running_time(
+                cluster_id=cluster_id,
+                start_time=start_time,
+                end_time=end_time,
+                page_limit=page_limit
+            )
+            data_list = [r.dumps() for r in running_time_list]
 
-        df = pd.DataFrame(data_list)
-        df.index = pd.to_datetime(df['start'])
-        df = df.asfreq("T", method="bfill")
-        df = df.loc[:, ["cluster_id", "current_num_workers"]]
-        return df
+            df = pd.DataFrame(data_list)
+            df.index = pd.to_datetime(df['start'])
+            df = df.asfreq("T", method="bfill")
+            return df
+        elif type(cluster_id) is list:
+            df_list = []
+            for c in cluster_id:
+                running_time_list = self.cluster_running_time(
+                    cluster_id=c,
+                    start_time=start_time,
+                    end_time=end_time,
+                    page_limit=page_limit
+                )
+                data_list = [r.dumps() for r in running_time_list]
+                df = pd.DataFrame(data_list)
+                df.index = pd.to_datetime(df['start'])
+                df = df.asfreq("T", method="bfill")
+                df_list.append(df)
+            return pd.concat(df_list)
+        raise ValueError("type of the `cluster_id` not matched")
 
     def cluster_running_time(
             self,
