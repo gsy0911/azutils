@@ -15,7 +15,7 @@ jobs:
     # use `strategy.matrix` to test multiple Python version
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8]
+        python-version: [3.8]
     steps:
       # checkout
       # See: https://github.com/actions/checkout
@@ -34,7 +34,7 @@ jobs:
           curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
       # add path to Poetry
       - name: Add path for Poetry
-        run: echo "::add-path::$HOME/.poetry/bin"
+        run: echo "$HOME/.poetry/bin" >> $GITHUB_PATH
       - name: Install Dependencies
         run: poetry install --no-interaction --no-dev
       # pytest

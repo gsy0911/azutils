@@ -2,15 +2,22 @@ import requests
 from typing import List, Optional, Union
 
 from cachetools import cached
+import pandas as pd
+import seaborn as sns
+
 from ._databricks import (
     Databricks,
     DatabricksEvents,
     DataBricksRunningTime,
     DatabricksSetting,
     DatabricksSettingHistory,
-    DatabricksJob
+    DatabricksJob,
+    DatabricksView
 )
 from .utils import convert_datetime_to_milli_epoch
+
+# set seaborn theme
+sns.set(style='darkgrid')
 
 
 class DatabricksClient:
@@ -46,7 +53,18 @@ class DatabricksClient:
             return DatabricksJob(response.json())
 
     @cached(cache={})
-    def clusters_get(self, cluster_id: str, raw=False):
+    def clusters_get(self, cluster_id: str, raw=False) -> Union[dict, Databricks]:
+        """
+
+        Args:
+            cluster_id:
+            raw: return dict if True, Databricks-instance otherwise
+
+        Returns:
+
+        See Also:
+            https://docs.databricks.com/dev-tools/api/latest/jobs.html#runs-get
+        """
         url = f"{self._base_url}/clusters/get?cluster_id={cluster_id}"
         response = requests.get(url, headers=self._headers)
         if raw:
@@ -74,6 +92,27 @@ class DatabricksClient:
         else:
             return [Databricks(cluster) for cluster in response.json()['clusters']]
 
+    @cached(cache={})
+    def jobs_runs_export(self, run_id: str, raw=False) -> [dict, List[DatabricksView]]:
+        """
+
+        Args:
+            run_id:
+            raw:
+
+        Returns:
+
+        See Also:
+            https://docs.databricks.com/dev-tools/api/latest/jobs.html#runs-export
+        """
+        url = f"{self._base_url}/jobs/runs/export?run_id={run_id}"
+
+        response = requests.get(url, headers=self._headers)
+        if raw:
+            return response.json()
+        else:
+            return DatabricksView.get_from_runs_export(response.json())
+
     def clusters_events(
             self,
             cluster_id: str,
@@ -91,14 +130,12 @@ class DatabricksClient:
             end_time=end_timestamp
         )
         if "events" not in response:
-            print(response)
             return []
         result_list.extend(response['events'])
         for _ in range(page_limit):
             if "next_page" not in response:
                 break
             next_page = response['next_page']
-            print(next_page)
             end_timestamp = next_page['end_time']
             offset = next_page['offset']
             response = self._clusters_events(
@@ -120,6 +157,20 @@ class DatabricksClient:
             end_time: Optional[int] = None,
             offset: Optional[int] = None,
             limit=500) -> dict:
+        """
+
+        Args:
+            cluster_id:
+            start_time: ISO8601-format, i.e. %Y-%m-%dT%H:%M:%S, or %Y-%m-%d
+            end_time: ISO8601-format, i.e. %Y-%m-%dT%H:%M:%S, or %Y-%m-%d
+            offset:
+            limit:
+
+        Returns:
+
+        See Also:
+            https://docs.databricks.com/dev-tools/api/latest/clusters.html#events
+        """
         url = f"{self._base_url}/clusters/events"
         payload = {
             "cluster_id": cluster_id,
@@ -135,12 +186,67 @@ class DatabricksClient:
         data = response.json()
         return data
 
+    def cluster_running_time_as_sns(
+            self,
+            cluster_id: Union[str, List[str]],
+            start_time: Optional[Union[int, str]] = None,
+            end_time: Optional[Union[int, str]] = None,
+            page_limit: int = 500,
+            **kwargs
+    ):
+        df = self.cluster_running_time_as_df(
+            cluster_id=cluster_id,
+            start_time=start_time,
+            end_time=end_time,
+            page_limit=page_limit
+        )
+        df['time'] = df.index
+        data_df = df.pivot(index="time", columns="cluster_id", values="current_num_workers")
+        return sns.lineplot(data=data_df, **kwargs)
+
+    def cluster_running_time_as_df(
+            self,
+            cluster_id: Union[str, List[str]],
+            start_time: Optional[Union[int, str]] = None,
+            end_time: Optional[Union[int, str]] = None,
+            page_limit: int = 500
+    ) -> pd.DataFrame:
+        if type(cluster_id) is str:
+            running_time_list = self.cluster_running_time(
+                cluster_id=cluster_id,
+                start_time=start_time,
+                end_time=end_time,
+                page_limit=page_limit
+            )
+            data_list = [r.dumps() for r in running_time_list]
+
+            df = pd.DataFrame(data_list)
+            df.index = pd.to_datetime(df['start'])
+            df = df.asfreq("T", method="bfill")
+            return df
+        elif type(cluster_id) is list:
+            df_list = []
+            for c in cluster_id:
+                running_time_list = self.cluster_running_time(
+                    cluster_id=c,
+                    start_time=start_time,
+                    end_time=end_time,
+                    page_limit=page_limit
+                )
+                data_list = [r.dumps() for r in running_time_list]
+                df = pd.DataFrame(data_list)
+                df.index = pd.to_datetime(df['start'])
+                df = df.asfreq("T", method="bfill")
+                df_list.append(df)
+            return pd.concat(df_list)
+        raise ValueError("type of the `cluster_id` not matched")
+
     def cluster_running_time(
             self,
             cluster_id: str,
             start_time: Optional[Union[int, str]] = None,
             end_time: Optional[Union[int, str]] = None,
-            page_limit: int = 500):
+            page_limit: int = 500) -> List[DataBricksRunningTime]:
         cluster_events = self.clusters_events(
             cluster_id=cluster_id, start_time=start_time, end_time=end_time, page_limit=page_limit)
         return DataBricksRunningTime.get_from_databricks_event(cluster_events)
@@ -150,7 +256,7 @@ class DatabricksClient:
             cluster_id: str,
             start_time: Optional[Union[int, str]] = None,
             end_time: Optional[Union[int, str]] = None,
-            page_limit: int = 500):
+            page_limit: int = 500) -> List[DatabricksSetting]:
         cluster_events = self.clusters_events(
             cluster_id=cluster_id, start_time=start_time, end_time=end_time, page_limit=page_limit)
         return DatabricksSetting.get_from_databricks_event(cluster_events)
@@ -170,7 +276,17 @@ class DatabricksClient:
             self,
             cluster_id: str,
             start_time: Optional[Union[int, str]] = None,
-            end_time: Optional[Union[int, str]] = None):
+            end_time: Optional[Union[int, str]] = None) -> float:
+        """
+
+        Args:
+            cluster_id: [required]
+            start_time: ISO8601-format, i.e. %Y-%m-%dT%H:%M:%S, or %Y-%m-%d
+            end_time: ISO8601-format, i.e. %Y-%m-%dT%H:%M:%S, or %Y-%m-%d
+
+        Returns:
+
+        """
         payload = {
             "cluster_id": cluster_id,
             "start_time": start_time,
